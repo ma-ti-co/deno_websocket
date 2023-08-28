@@ -6,46 +6,57 @@ const wss = new WebSocketServer(8080);
 wss.on("connection", function (ws: WebSocketClient) {
   //broadcast_usernames();
 
-  ws.on("message", function (response: string) {
-    let payload = JSON.parse(response);
-    let message = JSON.parse(payload.message);
-    connectedClients.set(message.user, ws)
-    broadcast_usernames()
-  });
-
-  ws.on("close", function (response:any) {
-    for (const [user, client] of connectedClients.entries()) {
-      if (client === ws) {
-        connectedClients.delete(user);
-        broadcast_usernames();
-        break;
+  ws.on("message", function (message: string) {
+    let payload = JSON.parse(message);
+    let user_id = payload.message.user_id;
+    let game_id = payload.message.game_id;
+    if(payload.event==="open"){
+      if(!connectedClients.get(game_id)){
+        console.log("creating new channel")
+        let sockets = [ws];
+        connectedClients.set(game_id, sockets);
+      }else{
+        console.log("adding socket to existing channel")
+        let sockets = connectedClients.get(game_id)
+        sockets.push(ws);
+        connectedClients.set(game_id, sockets);
+      }
+      let group = connectedClients.get(game_id);
+      group.forEach((ws) => {
+        ws.send(JSON.stringify({event:"new_user", user_id:user_id}));
+      })
+    }else if(payload.event==="update"){
+      let group = connectedClients.get(game_id);
+      group.forEach((ws) => {
+        ws.send(JSON.stringify({event:"update_user", user_id:user_id}));
+      })
+    }else if(payload.event==="close"){
+      let group = connectedClients.get(game_id);
+      let wsToRemove = group.indexOf(ws);
+      console.log("user left, will update now");
+      group.forEach((ws) => {
+        ws.send(JSON.stringify({event:"user_left", user_id:user_id}));
+      })
+      if (wsToRemove !== -1) {
+        group.splice(wsToRemove, 1);
+        wsToRemove.close();
       }
     }
+
+
+    //broadcast_usernames(group)
+  });
+
+  ws.on("close", function () { 
+    //  when a websocket is closed, how can i
+    // find it in the existing array 
   })
 });
 
 
-// // send a message to all connected clients
-function broadcast(message:any) {
 
-  for (const client of connectedClients.values()) {
-    console.log(message);
-    client.send(message);
-  }
-}
 
-// // send updated users list to all connected clients
-function broadcast_usernames() {
-  const user_ids = [...connectedClients.keys()];
-  console.log(
-    "Sending updated username list to all clients: " +
-      JSON.stringify(user_ids),
-  );
-  broadcast(
-    JSON.stringify({
-      event: "update_users",
-      user_ids: user_ids,
-    }),
-  );
-}
+
+
+
 
