@@ -1,4 +1,3 @@
-import { Deno } from 'https://deno.land/std/node/module.ts';
 import { Application, Router } from "https://deno.land/x/oak/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { config } from "https://deno.land/x/dotenv/mod.ts";
