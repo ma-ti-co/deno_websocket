@@ -12,11 +12,18 @@ wss.on("connection", function (ws: WebSocketClient) {
     connectedClients.set(message.user, ws)
     broadcast_usernames()
   });
+
+  ws.on("close", function (response:any) {
+    for (const [user, client] of connectedClients.entries()) {
+      if (client === ws) {
+        connectedClients.delete(user);
+        broadcast_usernames();
+        break;
+      }
+    }
+  })
 });
 
-wss.on('close', function (ws: WebSocketClient) {
-  console.log("user left");
-})
 
 // // send a message to all connected clients
 function broadcast(message:any) {
