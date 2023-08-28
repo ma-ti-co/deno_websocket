@@ -11,17 +11,17 @@ const connectedClients = new Map();
 const app = new Application();
 const port = 8000;
 const router = new Router();
-const supabase = createClient(env['SUPABASE_URL'], env['SUPABASE_KEY'])
+//const supabase = createClient(env['SUPABASE_URL'], env['SUPABASE_KEY'])
 
 
-const fetchCurrentGame = async (game_id:string) => {
-  const {data, error} = await supabase
-    .from('games')
-    .select('id, player_1, player_2')
-    .eq('id', game_id)
-  if(error) return error;
-  return data;
-}
+// const fetchCurrentGame = async (game_id:string) => {
+//   const {data, error} = await supabase
+//     .from('games')
+//     .select('*')
+//     .eq('id', game_id)
+//   if(error) return error;
+//   return data;
+// }
 
 
 
@@ -48,29 +48,34 @@ function broadcast_usernames() {
   );
 }
 
-function subscribeToChannel(){
-  const channel = supabase
-  .channel('any')
-  .on('postgres_changes', { event: '*', schema: 'public', table: 'games'}, (payload:any) => {
-    console.log("update", payload)
-  })
-  .subscribe()
+function test() {
+  broadcast("hallo!");
 }
+
+// function subscribeToChannel(){
+//   const channel = supabase
+//   .channel('any')
+//   .on('postgres_changes', { event: '*', schema: 'public', table: 'games'}, (payload:any) => {
+//     console.log("update", payload)
+//   })
+//   .subscribe()
+// }
 
 
 router.get("/", async (ctx) => {
   const socket = await ctx.upgrade();
-  const user_id = ctx.request.url.searchParams.get('id');
-  const game_id = ctx.request.url.searchParams.get('game');
-  // get game based on game_id
-  const gameData = await fetchCurrentGame(game_id);
-  subscribeToChannel();
-  socket.user_id = user_id;
-  connectedClients.set(user_id, socket);
-  broadcast_usernames();
-  await Deno.writeTextFile("./hello.txt", `${socket.user_id ? socket.user_id:'someone' } connected.`, {
-    append: true,
-  });
+  test();
+  // const user_id = ctx.request.url.searchParams.get('id');
+  // const game_id = ctx.request.url.searchParams.get('game');
+  // // get game based on game_id
+  // //const gameData = await fetchCurrentGame(game_id);
+  // //subscribeToChannel();
+  // socket.user_id = user_id;
+  // connectedClients.set(user_id, socket);
+  // broadcast_usernames();
+  // await Deno.writeTextFile("./hello.txt", `${socket.user_id ? socket.user_id:'someone' } connected.`, {
+  //   append: true,
+  // });
 
 
 
@@ -114,12 +119,12 @@ router.get("/", async (ctx) => {
 
 app.use(router.routes());
 app.use(router.allowedMethods());
-app.use(async (context) => {
-  await context.send({
-    root: `${Deno.cwd()}/`,
-    index: "public/index.html",
-  });
-});
+// app.use(async (context) => {
+//   await context.send({
+//     root: `${Deno.cwd()}/`,
+//     index: "public/index.html",
+//   });
+// });
 
 
 console.log("Listening at http://localhost:" + port);
