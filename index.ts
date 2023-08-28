@@ -13,10 +13,12 @@ wss.on("connection", function (ws: WebSocketClient) {
     if(payload.event==="open"){
       if(!connectedClients.get(game_id)){
         console.log("creating new channel")
+        console.log(`${user_id} added to ${game_id}`)
         let sockets = [ws];
         connectedClients.set(game_id, sockets);
       }else{
         console.log("adding socket to existing channel")
+        console.log(`${user_id} added to ${game_id}`)
         let sockets = connectedClients.get(game_id)
         sockets.push(ws);
         connectedClients.set(game_id, sockets);
